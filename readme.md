@@ -18,11 +18,16 @@ Win10 ZDI/VDI automation with Ansible/Ansible Tower has the following high level
 
 ## High Level Architecture
 
-In the current phase of the ZDI/VDI automation project, the front end is the Ansible Tower, the business user will login to the Ansible Tower to initiate a tower job to create Win10 VDI desktop. The Ansible Tower Create Win10 VDI job template backend Ansible playbook will use playbook library to start the process, eventually the playbook will communicate to a VMware vCenter, and create a VM based on specified VM template and customization spec, so a VDI desktop is created, and an email notification will send to the business user who requested the VDI. 
-At the meantime, utilizing the same infrastructure described above, there is a Win10 VDI Reclamation job scheduled in Ansible Tower, running once every day. This job will fulfill VDI lifecycle management task, which is deleting VDI after 30 days of its creation. 
-There are two other self-service service catalog tasks that allow business user to extend the lease of VDI desktop or delete VDI desktop before reclamation.  
+In the current phase of the ZDI/VDI automation project, the front end is the Ansible Tower. 
+- The business user will login to the Ansible Tower to initiate a tower job to create Win10 VDI desktop. 
+- The Ansible Tower `Create Win10 VDI job template` backend Ansible playbook will use playbook library to start the process. Eventually the playbook will communicate to a VMware vCenter, and create a VM based on specified VM template and customization spec, so a VDI desktop is created. 
+- An email notification will send to the business user who requested the VDI. 
 
-In a future phase, new self-service portal utilizing ServiceNow can be plugged into the current Ansible/Ansible Tower implementation. The change will only be in the front end portal portion, the backend as well as the current front end will be kept intact shown from below graphic.
+At the meantime, utilizing the same infrastructure described above, there is a `Win10 VDI Reclamation job` scheduled in Ansible Tower, running once every day. This job will fulfill VDI lifecycle management task, which is deleting VDI after 30 days of its creation. 
+
+There are two other self-service service catalog tasks that allow business user to `extend the lease of VDI desktop` or `delete VDI desktop before reclamation`.  
+
+In a future phase, new self-service portal utilizing __ServiceNow__ can be plugged into the current Ansible/Ansible Tower implementation. The change will only be in the front end portal portion, the backend as well as the current front end will be kept intact shown from below graphic.
 
 
 # VDI Automation Ansible Playbooks and Roles
@@ -37,16 +42,16 @@ Playbooks folder includes high level playbooks which will be used by Ansible Tow
 ```
 09/06/2021  03:15 AM               768 vdi_decom.yml
 09/06/2021  03:15 AM               938 vdi_extend.yml
-08/22/2021  03:08 AM             2,451vdi_provision.yml
+08/22/2021  03:08 AM             2,451 vdi_provision.yml
 08/31/2021  02:59 PM             1,369 vdi_report.yml
-08/13/2021  02:00 PM               773  vdi_schedule.yml
+08/13/2021  02:00 PM               773 vdi_schedule.yml
 ```
 
-* vdi_provision: provisioning a ZDI and update ZDI metadata under annotation to determine when to decommission the ZDI after 30 days.
-* vdi_schedule: scan all live ZDIs to determine the playbook will send an email notification on expiration of a VDI, or decommssion the VDI.
-* vdi_extend: extend the expiration day of specified ZDI(s).
-* vdi_decom: delete the specified ZDI(s).
-* vdi_report: send ZDI lease status report by email, scan all live VDIs to list lease expiration date and remaining lease hours, etc.
+1. vdi_provision: provisioning a ZDI and update ZDI metadata under annotation to determine when to decommission the ZDI after 30 days.
+2. vdi_schedule: scan all live ZDIs to determine the playbook will send an email notification on expiration of a VDI, or decommssion the VDI.
+3. vdi_extend: extend the expiration day of specified ZDI(s).
+4. vdi_decom: delete the specified ZDI(s).
+5. vdi_report: send ZDI lease status report by email, scan all live VDIs to list lease expiration date and remaining lease hours, etc.
 
 
 ### Ansible Roles
@@ -121,7 +126,7 @@ Here is the list of reasons why we need to have custom Ansible Modules
    * Slow to run
    * Unable to retrieve VM annotation
 
-It is safe to contine using those two custom Ansible modules in forseeable future even if the Ansible version is updated to newer version in tower. Currently Ansible Tower version in PROD is 2.4.3, the FTDEV Ansible Tower version is 2.5.2.
+It is safe to contine using those two custom Ansible modules in forseeable future even if the Ansible version is updated to newer version in tower. Currently Ansible Tower version in PROD is 2.4.3, the ZTDEV Ansible Tower version is 2.5.2.
 
 The custom Ansible module path is currently defined under ansible.cfg file: 
 
