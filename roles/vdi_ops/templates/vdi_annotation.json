@@ -1,0 +1,1 @@
+{"owner": "{{ vdi_owner }}", "owner_email": "{{ vdi_owner_email }}", "lease_started": "{{ vdi_create_time }}", "lease_days": "{{ vdi_lease_days }}", "note": "{{ vdi_note }}", "email_cc_list": "{{ email_cc_list }}"}

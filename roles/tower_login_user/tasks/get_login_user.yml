@@ -1,0 +1,38 @@
+---
+# ************************************************************************
+# Description: Tasks to get login user of the Tower 
+# Parameters:
+#   tower_job_id: input
+#   vdi_owner: output
+#   vdi_owner_email: output
+# 
+# ************************************************************************
+
+- include_vars:
+    file: "../../tower_restapi/defaults/main.yml" 
+    
+- name: Get Tower Job
+  include_role:
+    name: tower_restapi
+    tasks_from: tower_get
+  vars:
+    tower_get_url: "{{ setting[tz_environment].tower_url }}/api/v2/jobs/{{ tower_job_id }}/"
+
+- set_fact: 
+    vdi_owner_requestor:  "{{ register_result.json.summary_fields.created_by.username }}"
+
+- debug: 
+    msg: "{{ register_result.json.summary_fields.created_by.username }}"
+- debug: 
+    msg: "{{ register_result.json.summary_fields.created_by.id }}"
+
+- name: Get Tower user info
+  include_role:
+    name: tower_restapi
+    tasks_from: tower_get
+  vars:
+    tower_get_url: "{{ setting[tz_environment].tower_url }}{{ register_result.json.related.created_by }}"
+
+- set_fact: 
+    vdi_requestor_email: "{{ register_result.json.email }}"
+   

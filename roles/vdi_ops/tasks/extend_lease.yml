@@ -1,0 +1,63 @@
+---
+# ************************************************************************
+# Description: Extend Lease of a single ZDI 
+# Parameters:
+#   vdi_name: ZDI name
+#   time_zone: America/Los_Angeles
+#   extension_lease_days: 15
+#   tz_environment: TZDEV or TZPROD
+# 
+# ************************************************************************
+
+- debug: 
+    msg: "Starting to extend the lease of ZDI {{ vdi_name }}..."
+
+- include_vars:
+    file: "../../vdi_name/defaults/main.yml" # for prefix
+- name: Checking user input
+  fail:
+    msg: "Invalid ZDI name specified '{{ vdi_name }}', a prefix of '{{ vdiname_prefix }}' is required."
+  when: 'vdiname_prefix not in vdi_name'
+
+- include_role:
+    name: vdi_ops
+    tasks_from: find_vdi
+
+- name: Check specified VDI
+  fail:
+    msg: "The specified Win10 ZDI desktop '{{ vdi_name }}' cannot be found in the specified VM folder. Please enter a correct ZDI name."
+  when: vdi_facts.failed == true
+
+# - set_fact:
+#     vdi_start_time: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d %H:%M:%S %Y %Z\"') }}"
+
+- name: Get ZDI info
+  include_role:
+    name: vdi_ops
+    tasks_from: get_vdi_info
+
+# this will get tower job id, and login user name, no email
+- name: Get the Ansible Tower login user
+  include_role:
+    name: tower_login_user
+
+- name: Modifying ZDI machine annotation
+  include_role:
+    name: vdi_ops
+    tasks_from: provision
+  vars:
+    vdi_note: "{{ vdi_json.note }}"  # this is not updated in the annotation
+    provision_lease_days: "{{ extension_lease_days | int + vdi_json.lease_days | int }}"
+    extend_vdi_lease: yes
+
+- name: Notify the completion of lease extension
+  include_role:
+    name: vdi_ops
+    tasks_from: notify_provision 
+  vars:
+    vdi_note: "{{ vdi_json.note }}"
+    provision_lease_days: "{{ extension_lease_days | int + vdi_json.lease_days | int }}"
+    extend_vdi_lease: yes
+
+- pause: 
+    seconds: 1

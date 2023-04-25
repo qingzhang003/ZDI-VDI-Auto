@@ -1,0 +1,25 @@
+---
+
+setting: 
+  TZDEV:
+    tower_url: https://dev003.timz003.com
+    tower_username: USERTIM 
+    tower_password: !vault |
+              $ANSIBLE_VAULT;1.1;AES256
+              3939asdfafgggg343731393a26434366237333231663632613gresdfg2336233396233                                                                                                                     3562613437
+              3430646663633335633430303532353136346238613234370a38306462613164623261                                                                                                                     3063353330
+              343361323564326633303asdfasfdafdafgggggggggg65316236333338336132663866                                                                                                                     3566363138
+              3730313566343561620a6536353963336asdfagagagagggggggg363461356435626665                                                                                                                     6136626430
+              3837
+  TZPROD:
+    tower_url: https://tower.TZPROD.timz003.com/
+    tower_username: USERTIM 
+    tower_password: !vault |
+              $ANSIBLE_VAULT;1.1;AES256
+              3939373838396231dafa31393264343662373332316636326135353932336233396233                                                                                                                     3562613437
+              3430646663633asdfasdfsafaadfafdaafdad238613234370a38306462613164623261                                                                                                                     3063353330
+              3433613235643266333039adfgdagdfaghhhhhh1626565316236333338336132663866                                                                                                                     3566363138
+              3730313566343561620a6536asdfsafdafaaa361313339343862363461356435626665                                                                                                                     6136626430
+              3837
+
+tz_environment: TZDEV

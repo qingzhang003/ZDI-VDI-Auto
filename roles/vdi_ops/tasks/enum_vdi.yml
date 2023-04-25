@@ -1,0 +1,25 @@
+---
+# ************************************************************************
+# Description:  Tasks to enumerate VDIs via vCenter 
+# Parameters:
+#   vc_setting: vCenter configuration
+#   vdi_facts: output in a dictionary
+#   
+# ************************************************************************
+- name: Gather only registered virtual machines
+  vmware_vm_facts:
+    # hostname: "{{ vc_setting[tz_environment].vcenter_name }}" 
+    # username: "{{ vc_setting[tz_environment].vc_username }}" 
+    # password: "{{ vc_setting[tz_environment].vc_password }}" 
+    hostname: "{{ lookup('env', 'VMWARE_HOST') }}"
+    username: "{{ lookup('env', 'VMWARE_USER') }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') }}"    
+        
+    vm_type: vm
+    vm_folder: "{{ vc_setting[tz_environment].vc_vm_folder }}"
+    validate_certs: False
+  delegate_to: localhost
+  register: vdi_facts
+
+- debug: var=vdi_facts
+

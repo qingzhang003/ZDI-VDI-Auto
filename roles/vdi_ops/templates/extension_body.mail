@@ -1,0 +1,17 @@
+Dear {{ vdi_owner }},
+
+Your request to extend the lease of Win10 ZDI desktop {{ vdi_name }} is completed successfully with the following new lease information:
+
+- ZDI Name: {{ vdi_name }}
+- Lease Start Date: {{ vdi_start_time }}
+- New Lease Expiration Date: {{ vdi_expiration_date }}
+- New Lease Period: {{ vdi_lease_days }} days
+- Requested By: {{ tower_user_name }}
+- Ansible Tower Job Id: {{ tower_job_id }}
+
+Note: The ZDI will be deleted automatically after {{ vdi_lease_days }} days. Application Certification Leads can login to Ansible Tower to request another extension or to delete the ZDI before the expiration date.  
+
+Thank you for using ZDI Automation from Ansible Tower.
+
+Your Client Platforms Team
+* This message was sent from an unmonitored email address

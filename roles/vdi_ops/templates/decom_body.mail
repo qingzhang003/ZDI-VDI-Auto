@@ -1,0 +1,17 @@
+{% if self_decom == true %}
+Win10 ZDI "{{ vdi_name }}" has been deleted manually.  
+{% else %}
+Win10 ZDI "{{ vdi_name }}" has reached the end of its' lease and has been deleted.  
+{% endif %}
+
+- Lease Start Date: {{ vdi_json.lease_started }}
+- Lease Period: {{ vdi_json.lease_days }}
+- Original ZDI Owner: {{ vdi_json.owner }}
+- Original ZDI Note: {{ vdi_json.note }}
+{% if self_decom == true %}
+- Deletion Requested By: {{ tower_user_name }}
+- Ansible Tower Job Id: {{ tower_job_id }}
+{% endif %}
+
+Thanks for using ZDI Automation from Ansible Tower.
+* This message was sent from an unmonitored email address

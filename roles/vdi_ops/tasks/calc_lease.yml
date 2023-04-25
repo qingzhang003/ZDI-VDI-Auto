@@ -1,0 +1,28 @@
+---
+# ************************************************************************
+# Description: Calculate time period of lease expiration 
+# Parameters:
+#   lease_day
+#   current_time
+#   
+# ************************************************************************
+
+- name: Get elapsed days based on schedule time
+  set_fact:
+    sched_elapsed_days: "{{ (lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d {{ schedule_run_time }} %Y\"') | to_datetime('%c') - vdi_json.lease_started[:-4] | to_datetime('%c')).total_seconds() / (60 * 60 * 24) }}" # use '%a %b %d %H:%M:%S %Y' is good too
+
+- debug: var=sched_elapsed_days
+
+- name: Calculate the expiration date 1
+  set_fact:
+    current_expiration_date: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d {{ schedule_run_time }} %Y %Z\" -d \"+{{ lease_days | int - sched_elapsed_days | int }} days\"') }}"
+  when: sched_elapsed_days | float >= 0
+
+- name: Calculate the expiration date 2
+  set_fact:
+    current_expiration_date: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d {{ schedule_run_time }} %Y %Z\" -d \"+{{ lease_days | int - sched_elapsed_days | int + 1}} days\"') }}"
+  when: sched_elapsed_days | float < 0
+
+- name: Calaculate the remaining time
+  set_fact:
+    remaining_hours: "{{ (current_expiration_date[:-4] | to_datetime('%c') - current_time | to_datetime('%c')).total_seconds() / (60 * 60) }}"

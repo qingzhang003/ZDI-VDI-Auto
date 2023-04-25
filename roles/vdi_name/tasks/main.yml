@@ -1,0 +1,90 @@
+---
+# ************************************************************************
+# Description:  File based get an new ZDI name - this is obsolete
+# Parameters:
+#   vdi_name: output 
+#   
+# ************************************************************************
+- set_fact:
+    vdiname_file_path: "{{role_path}}{{vdiname_path}}{{ vdiname_file }}"
+
+- set_fact:
+    vdiname_file_path2: "{{role_path}}{{vdiname_path}}{{ vdiname_edit }}"
+
+- name: Checking ZDI naming file
+  stat:
+    path: "{{ vdiname_file_path }}"
+  register: stat_result
+  delegate_to: 127.0.0.1
+  until: stat_result.stat.exists == True
+  retries: 6
+  delay: 1   
+  ignore_errors: yes
+
+- name: stat ZDI name file
+  stat: path={{ vdiname_file_path }}
+  register: vdiname_stat
+  delegate_to: 127.0.0.1
+  until: vdiname_stat.stat.exists == True
+  retries: 5
+  delay: 1   
+  ignore_errors: yes
+
+- debug:
+    msg: "sequence file path = {{ vdiname_file_path }}"
+
+- block:
+    - name: stat ZDI name file
+      stat: path={{ vdiname_file_path2 }}
+      register: vdiname_stat2
+      delegate_to: 127.0.0.1
+      until: vdiname_stat2.stat.exists == True
+      retries: 10
+      delay: 1   
+      ignore_errors: yes
+
+    - name: Create target directory
+      file: path={{role_path}}{{vdiname_path}} state=directory mode=0755
+      when: vdiname_stat2.stat.exists == False
+
+    - name: Create new host name sequence file
+      copy:
+        content: "0000" # not required. When used instead of I(src), sets the contents of a file directly to the specified value. For anything advanced or with formatting also look at the template module.
+        force: yes # not required. the default is C(yes), which will replace the remote file when contents are different than the source. If C(no), the file will only be transferred if the destination does not exist.
+        mode: 0555 # not required. Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like C(0644) or C(01777)). Leaving off the leading zero will likely have unexpected results. As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
+        dest: "{{ vdiname_file_path }}"
+      when: vdiname_stat2.stat.exists == False
+  when: vdiname_stat.stat.exists == False
+  
+- name: Rename the host sequence file
+  command: mv {{ vdiname_file_path }} {{ vdiname_file_path2 }}
+  register: rename_result
+  when: vdiname_stat.stat.exists or (vdiname_stat.stat.exists == False and vdiname_stat2.stat.exists == False)
+  ignore_errors: yes
+
+- block:
+    - name: Get host name sequence number from file
+      set_fact:
+        sequence_num: "{{ lookup('file',vdiname_file_path2)}}"
+
+    - set_fact:
+        vdi_name: "{{ vdiname_prefix }}{{ '%05d'|format(sequence_num|int + 1) }}"    
+
+    - name: update host name sequence file
+      copy:
+        content: "{{ '%05d'|format(sequence_num|int + 1) }}"
+        force: yes # not required. the default is C(yes), which will replace the remote file when contents are different than the source. If C(no), the file will only be transferred if the destination does not exist.
+        mode: 0555 # not required. Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like C(0644) or C(01777)). Leaving off the leading zero will likely have unexpected results. As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
+        dest: "{{ vdiname_file_path2 }}"
+
+    - name: Rename the host sequence file
+      command: mv {{ vdiname_file_path2 }} {{ vdiname_file_path }}
+
+    - debug: 
+        msg: "New ZDI name is {{ vdi_name }}"  
+
+  when: rename_result.rc == 0
+  
+  
+
+  

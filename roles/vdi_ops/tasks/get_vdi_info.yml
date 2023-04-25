@@ -1,0 +1,20 @@
+---
+# ************************************************************************
+# Description:  Tasks for scanning a single ZDI to determine if it needs to be deleted, or send email notification
+# Parameters:
+#   vdi_facts: information about the VDI, including lease_days, lease_started, etc
+#   extension_lease_days
+#   
+# ************************************************************************
+- name: Getting ZDI json data
+  set_fact:
+    vdi_json: "{{ vdi_facts.instance.annotation | to_json | from_json }}"
+  when: vdi_facts.instance.annotation | to_json | length > 60
+
+- name: Set email notification setting
+  set_fact:
+    vdi_owner_email: "{{ vdi_json.owner_email }}"
+    vdi_owner: "{{ vdi_json.owner }}"
+    email_cc_list: "{{ vdi_json.email_cc_list }}"
+    vdi_start_time: "{{ vdi_json.lease_started }}"
+

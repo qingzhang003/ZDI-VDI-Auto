@@ -1,0 +1,66 @@
+---
+# ************************************************************************
+# Description:  Tasks to delete a ZDI via vCenter and send email notification
+# Parameters:
+#   vdi_name: input
+#   vc_setting: vCenter configuration
+#   vdi_json: information about the VDI, may not be defined
+#   
+# ************************************************************************
+- name: Remove ZDI by name
+  vmware_guest:
+    hostname: "{{ lookup('env', 'VMWARE_HOST') }}"
+    username: "{{ lookup('env', 'VMWARE_USER') }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') }}"    
+        
+    force: yes 
+    datacenter: "{{ vc_setting[tz_environment].vc_datacenter}}" 
+    cluster: "{{ vc_setting[tz_environment].vc_cluster }}"
+    name: "{{ vdi_name }}"
+    folder: "{{ vc_setting[tz_environment].vc_vm_folder }}" 
+    validate_certs: False
+    state: absent
+  register: decom_result
+  delegate_to: localhost
+
+- debug: var=decom_result
+
+- name: Set email subject line
+  set_fact:
+    mail_subject: "Win10 ZDI Desktop \"{{ vdi_name }}\" has been deleted"    
+
+- block:
+  - name: Set mail body info for undefined VDI
+    set_fact:
+      mail_body: |
+          Win10 ZDI "{{ vdi_name }}" has reached the end of its' lease and has been deleted.  
+          Thanks for using ZDI Automation from Ansible Tower.
+    when: vdi_json is not defined
+
+  - name: Set mail body detail
+    set_fact:
+      mail_body: "{{ lookup('template', 'decom_body.mail') }}"
+    when: vdi_json is defined
+  when: decom_result.failed == false
+
+- name: Set failure mail body info
+  set_fact:
+    mail_body: |
+        Win10 ZDI "{{ vdi_name }}" deletion failed.  
+        Please contact Client Platform team for support.
+    mail_subject: "Win10 ZDI Desktop \"{{ vdi_name }}\" deletion failed"    
+  when: decom_result.failed == true
+
+- set_fact:
+    vdi_owner_email: "{{ vdi_json.owner_email }}"
+  when: vdi_json is defined
+
+- set_fact:
+    vdi_owner_email: "{{ tower_user_name }}@timz003.com"
+  when: vdi_json is not defined
+
+- name: Email Notification
+  include_tasks: email.yml
+  vars:
+    email_cc_list: "{{ vdi_json.email_cc_list | default(omit) }}"
+   

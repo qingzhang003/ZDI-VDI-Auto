@@ -1,0 +1,28 @@
+---
+# ************************************************************************
+# Description:  Tasks to get a specific ZDI details
+# Parameters:
+#   vdi_name: input
+#   vc_setting: vCenter configuration
+#   vdi_facts: information about a VDI
+#   
+# ************************************************************************
+- name: Find ZDI by name
+  vmware_guest_facts:
+    # hostname: "{{ vc_setting[tz_environment].vcenter_name }}" 
+    # username: "{{ vc_setting[tz_environment].vc_username }}" 
+    # password: "{{ vc_setting[tz_environment].vc_password }}" 
+
+    hostname: "{{ lookup('env', 'VMWARE_HOST') }}"
+    username: "{{ lookup('env', 'VMWARE_USER') }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') }}"    
+
+    datacenter: "{{ vc_setting[tz_environment].vc_datacenter}}" 
+    name: "{{ vdi_name }}"
+    folder: "{{ vc_setting[tz_environment].vc_vm_folder }}" 
+    validate_certs: False
+  register: vdi_facts
+  delegate_to: localhost
+  ignore_errors: yes
+
+- debug: var=vdi_facts

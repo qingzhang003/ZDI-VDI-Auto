@@ -1,0 +1,123 @@
+---
+# ************************************************************************
+# Description: Main Provisiong ZDI 
+# Parameters:
+#   vdi_note: user enter notes for the VDI
+#   time_zone: America/Los_Angeles
+#   cc: email cc list
+# 
+# ************************************************************************
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    time_zone: America/Los_Angeles
+    email_cc_list: qing.zhang@timz003.com;qing.zhang@timz003.com;qing.zhang@timz003.com
+    vdi_owner_email: your.name@timz003.com
+    vdi_note: Manuall testing without Tower
+    my_time: Mon-Aug-13-20:54:38-PDT-2018
+    my_time2: Mon Aug 13, 2018 20:54:38 PDT
+    self_decom: true
+    vdi_name: abcd
+  tasks:
+    - name: Checking user input
+      fail:
+        msg: "Invalid ZDI owner email address '{{ vdi_owner_email }}'."
+      when: vdi_owner_email is not search("@")
+
+
+    - name: Enumerate all VDIs 
+      include_role:
+        name: vdi_ops
+        tasks_from: enum_vdi
+
+    - set_fact:
+        new_list: []
+        
+    - name: Checking ZDI status
+      include_role:
+        name: vdi_ops
+        tasks_from: populate_info
+      vars:
+        vdi_info_json: "{{ item.value.annotation }}"
+        vdi_name: "{{ item.key }}"
+      with_dict: "{{ vdi_facts.virtual_machines }}"
+
+    - name: Get email body for provision
+      set_fact:
+        mail_body: "{{ lookup('template', 'vdi_list.mail') }}"
+
+    - debug: var=mail_body
+    
+
+
+    # - set_fact:
+    #     owner_email_tmp: "{{ vdi_owner_email | lower }}"
+
+    # - name: Checking email address
+    #   fail:
+    #     msg: "Invalid ZDI owner timz003 email address '{{ vdi_owner_email }}'."
+    #   when: owner_email_tmp is not search("@timz003.com") or owner_email_tmp is search("your.name@timz003.com")
+
+    # - name: Set ZDI owner name
+    #   set_fact:
+    #     vdi_owner: "{{ owner_email_tmp | replace('@timz003.com', '') }}"
+
+    # - debug: var=vdi_owner;
+    
+
+    # - set_fact:
+    #     vdi_start_time: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d %H:%M:%S %Y %Z\"') }}"
+    #     # vdi_start_time: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+
+    # - set_fact:
+    #     abc: "{{ my_time2[:-4] | to_datetime('%a %b %d, %Y %H:%M:%S') }}"
+    #     # abc: "{{ my_time2[:-4] | to_datetime('%a %b %d %H:%M:%S %Y') }}"
+
+    # - debug: var=abc
+
+    # - set_fact:
+    #     efg: "{{  '%a, %B %d %Z' | strftime }}"
+
+    # - debug: var=efg
+
+    # - name: Get ZDI name
+    #   include_role:
+    #     name: vdi_name
+    #     tasks_from: live_scan
+
+    # - pause:
+    #     seconds: 1
+
+    # - include_role:
+    #     name: vdi_ops
+    #     tasks_from: find_vdi
+    #   when: vdi_name is defined
+
+    # - name: Retry ZDI name if ZDI exists
+    #   include_role:
+    #     name: vdi_name
+    #     tasks_from: live_scan
+    #   when: vdi_facts.failed == false
+ 
+    # # - name: get the Ansible Tower login user
+    # #   include_role:
+    # #     name: tower_login_user
+    # - set_fact:
+    #     tower_job_id: 3333
+    #     vdi_owner: USERTIM
+    #     vdi_owner_email: qing.zhang@timz003.com
+
+    # - name: Provision ZDI machine
+    #   include_role:
+    #     name: vdi_ops
+    #     tasks_from: provision
+    #   vars:
+    #     # vdi_note: Created by ZDI automation
+    #     extend_vdi_lease: no
+
+    # - name: Notify the completion of provisioning
+    #   include_role:
+    #     name: vdi_ops
+    #     tasks_from: notify_provision 
+

@@ -1,0 +1,47 @@
+---
+# ************************************************************************
+# Description: Main ZDI Report 
+# Parameters:
+#   report_email_list: email list of user to receive the report
+#   time_zone: America/Los_Angeles
+#   sort_by: name, remaining_hours
+#   list_all: 'true' or 'false', default is 'false'
+#   tz_environment
+# 
+# ************************************************************************
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    time_zone: America/Los_Angeles
+    report_email_list: qing.zhang@timz003.com
+    sort_by: name
+    tower_job_id: 1234
+    tower_user_name: USERTIM
+    tz_environment: TZDEV
+  tasks:
+    - name: Enumerate all VDIs 
+      include_role:
+        name: vdi_ops
+        tasks_from: enum_vdi
+
+    - set_fact:
+        report_current_time: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d %H:%M:%S %Y %Z\"') }}"
+        new_list: []
+        
+    - name: Populating ZDI lease status
+      include_role:
+        name: vdi_ops
+        tasks_from: populate_info
+      vars:
+        vdi_info_json: "{{ item.value.annotation }}"
+        vdi_name: "{{ item.key }}"
+      with_dict: "{{ vdi_facts.virtual_machines }}"
+
+    - name: Generating and sending email report
+      include_role:
+        name: vdi_ops
+        tasks_from: notify_report
+
+
+        

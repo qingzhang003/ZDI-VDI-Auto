@@ -1,0 +1,32 @@
+---
+# ************************************************************************
+# Description: Main Extend Lease of ZDI 
+# Parameters:
+#   vdi_name: ZDI name
+#   time_zone: America/Los_Angeles
+#   extension_lease_days: 15
+#   tz_environment: TZDEV or TZPROD
+# 
+# ************************************************************************
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    time_zone: America/Los_Angeles
+    vdi_names: ZDIUW10AC00030 , ZDIUW10AC00033 , ZDIUW10AC00031 
+    extension_lease_days: 15
+  tasks:
+    - name: Get ZDI name list
+      set_fact:
+        vdi_list: "{{ vdi_names.split(',') | list }}"
+
+    - name: Extending ZDI lease
+      include_role:
+        name: vdi_ops
+        tasks_from: extend_lease
+      vars:
+        vdi_name: "{{ item | replace(' ', '') }}"
+      with_items: "{{ vdi_list }}"
+
+
+

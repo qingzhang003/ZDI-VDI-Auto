@@ -1,0 +1,25 @@
+---
+# ************************************************************************
+# Description: include_tasks used by live_scan to get the max sequence number 
+# Parameters:
+#   server_item: ZDIUW10AC00021 is the key of this input
+#   max_seqence: output
+# 
+# ************************************************************************
+
+- block:
+  - name: Get current sequence number
+    set_fact:
+      current_seq: "{{ server_item.key | replace(vdiname_prefix, '') | int }}"
+
+  - debug: var=current_seq
+
+  # - debug:
+  #     msg: "{{ server_item.key[:9]}} -- {{ server_item.key }}"
+
+  - name: Assign new max seq number
+    set_fact:
+      max_sequence: "{{ current_seq }}"
+    when: current_seq | int > max_sequence | int
+  
+  when: server_item.key[:-5] == vdiname_prefix

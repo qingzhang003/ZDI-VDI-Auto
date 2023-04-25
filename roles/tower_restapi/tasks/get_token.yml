@@ -1,0 +1,14 @@
+---
+# ************************************************************************
+# Description:  Get token for tower rest api calls
+# Parameters:
+#   authorization1: output 
+#   
+# ************************************************************************
+
+- name: Get Tower Token from Env
+  set_fact:
+    authorization1: "Token {{ lookup('env', 'REST_API_TOKEN')[-40:] }}"
+    
+- debug: msg="The token is {{authorization1}}"
+  tags: debug

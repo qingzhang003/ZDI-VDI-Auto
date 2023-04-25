@@ -1,0 +1,36 @@
+---
+
+vc_setting: 
+  TZDEV:
+    vcenter_name: vc_dev.timz003.com
+    vc_username: TIMDEV\USERTIM
+    vc_datacenter: east2
+    vc_vm_folder: AZ-ClientProv
+    vc_template_name: Win10DEV
+    vc_cluster: east-vdi-A
+    vc_datastore: east2-VDI-A_PZ01_DS04
+    vc_customization_spec: Windows_vRA_TIMDEV
+
+  TZPROD:
+    vcenter_name: vc_prod.timz003.com
+    vc_datacenter: NYC1
+    vc_vm_folder: Win10App
+    vc_template_name: Win10
+    vc_cluster: NYC1-VDI-C2
+    vc_datastore: NYC1-VDI-C-2_PZP01_DS01
+    vc_customization_spec: Win10_GOLD_Script
+
+tz_environment: TZDEV
+extend_vdi_lease: no
+
+smtp_server: SMTP.timz003.com
+mail_from_address: vdi_automation@timz003.com
+
+provision_lease_days: 30
+extension_lease_days: 15
+warning_period1: 3
+warning_period2: 1
+schedule_run_time: 02:00:00
+time_zone: America/Los_Angeles
+
+

@@ -1,0 +1,95 @@
+---
+# ************************************************************************
+# Description: Provisiong ZDI 
+# Parameters:
+#   vdi_name: ZDIUW10AC00021
+#   vdi_owner: Qing Zhang
+#   vdi_owner_email: conqiz@timz003.com
+#   vdi_note: Manual updated with new lease time
+#   extend_vdi_lease: yes
+#   vdi_start_time: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+#   vdi_lease_days
+# ************************************************************************
+
+- name: Getting ZDI start date and lease period
+  set_fact:
+    vdi_create_time: "{{ vdi_start_time }}"
+    vdi_lease_days: "{{ provision_lease_days }}"
+    
+- name: Setting ZDI json data
+  set_fact:
+    vc_note: "{{ lookup('template', 'vdi_annotation.json') }}" # cannot write in the same line
+
+- debug: var=vc_note
+
+- debug: 
+    msg: "CG environment: {{ tz_environment }}"
+
+- block:
+  - name: Modify ZDI desktop
+    vmware_guest:
+      name: "{{ vdi_name }}" 
+      # username: "{{ vc_setting[tz_environment].vc_username }}" 
+      # password: "{{ vc_setting[tz_environment].vc_password }}" 
+      # hostname: "{{ vc_setting[tz_environment].vcenter_name }}" # not required. The hostname or IP address of the vSphere vCenter or ESXi server.,If the value is not specified in the task, the value of environment variable C(VMWARE_HOST) will be used instead.,Environment variable supported added in version 2.6.
+    
+      hostname: "{{ lookup('env', 'VMWARE_HOST') }}"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASSWORD') }}"    
+
+      force: no # not required. Ignore warnings and complete the actions.,This parameter is useful while removing virtual machine which is powered on state.,This module reflects the VMware vCenter API and UI workflow, as such, in some cases the `force` flag will be mandatory to perform the action to ensure you are certain the action has to be taken, no matter what the consequence. This is specifically the case for removing a powered on the virtual machine when C(state) is set to C(absent).
+      datacenter: "{{ vc_setting[tz_environment].vc_datacenter}}" # not required. Destination datacenter for the deploy operation.,This parameter is case sensitive.
+      cluster: "{{ vc_setting[tz_environment].vc_cluster }}" # not required. The cluster name where the virtual machine will run.,This is a required parameter, if C(esxi_hostname) is not set.,C(esxi_hostname) and C(cluster) are mutually exclusive parameters.,This parameter is case sensitive.
+      name_match: first # not required. choices: first;last. If multiple virtual machines matching the name, use the first or last found.
+      state: present # not required. choices: present;absent;poweredon;poweredoff;restarted;suspended;shutdownguest;rebootguest. Specify state of the virtual machine be in.,If C(state) is set to C(present) and virtual machine exists, ensure the virtual machine configurations conforms to task arguments.,If C(state) is set to C(absent) and virtual machine exists, then the specified virtual machine is removed with its associated components.,If C(state) is set to one of the following C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended) and virtual machine does not exists, then virtual machine is deployed with given parameters.,If C(state) is set to C(poweredon) and virtual machine exists with powerstate other than powered on, then the specified virtual machine is powered on.,If C(state) is set to C(poweredoff) and virtual machine exists with powerstate other than powered off, then the specified virtual machine is powered off.,If C(state) is set to C(restarted) and virtual machine exists, then the virtual machine is restarted.,If C(state) is set to C(suspended) and virtual machine exists, then the virtual machine is set to suspended mode.,If C(state) is set to C(shutdownguest) and virtual machine exists, then the virtual machine is shutdown.,If C(state) is set to C(rebootguest) and virtual machine exists, then the virtual machine is rebooted.
+      annotation: "{{ vc_note }}" # not required. A note or annotation to include in the virtual machine.
+      folder: "{{ vc_setting[tz_environment].vc_vm_folder }}" # not required. Destination folder, absolute path to find an existing guest or create the new guest.,The folder should include the datacenter. ESX's datacenter is ha-datacenter.,This parameter is case sensitive.,This parameter is required, while deploying new virtual machine. version_added 2.5.,If multiple machines are found with same name, this parameter is used to identify uniqueness of the virtual machine. version_added 2.5,Examples:,   folder: /ha-datacenter/vm,   folder: ha-datacenter/vm,   folder: /datacenter1/vm,   folder: datacenter1/vm,   folder: /datacenter1/vm/folder1,   folder: datacenter1/vm/folder1,   folder: /folder1/datacenter1/vm,   folder: folder1/datacenter1/vm,   folder: /folder1/datacenter1/vm/folder2
+      validate_certs: False # not required. Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.,If the value is not specified in the task, the value of environment variable C(VMWARE_VALIDATE_CERTS) will be used instead.,Environment variable supported added in version 2.6.,If set to C(True), please make sure Python >= 2.7.9 is installed on the given machine.
+    register: guest_vm_result2
+    delegate_to: 127.0.0.1
+
+  - name: Store ZDI Ops result for extension
+    set_fact:
+      guest_vm_result: "{{ guest_vm_result2 }}"
+  when: extend_vdi_lease
+
+- block:
+  - name: Create ZDI desktop
+    vmware_guest:
+      name: "{{ vdi_name }}" 
+      hostname: "{{ lookup('env', 'VMWARE_HOST') }}"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASSWORD') }}"    
+      # username: "{{ vc_setting[tz_environment].vc_username }}" 
+      # password: "{{ vc_setting[tz_environment].vc_password }}" 
+      # hostname: "{{ vc_setting[tz_environment].vcenter_name }}" # not required. The hostname or IP address of the vSphere vCenter or ESXi server.,If the value is not specified in the task, the value of environment variable C(VMWARE_HOST) will be used instead.,Environment variable supported added in version 2.6.
+      
+      force: no # not required. Ignore warnings and complete the actions.,This parameter is useful while removing virtual machine which is powered on state.,This module reflects the VMware vCenter API and UI workflow, as such, in some cases the `force` flag will be mandatory to perform the action to ensure you are certain the action has to be taken, no matter what the consequence. This is specifically the case for removing a powered on the virtual machine when C(state) is set to C(absent).
+      datacenter: "{{ vc_setting[tz_environment].vc_datacenter}}" # not required. Destination datacenter for the deploy operation.,This parameter is case sensitive.
+      cluster: "{{ vc_setting[tz_environment].vc_cluster }}" # not required. The cluster name where the virtual machine will run.,This is a required parameter, if C(esxi_hostname) is not set.,C(esxi_hostname) and C(cluster) are mutually exclusive parameters.,This parameter is case sensitive.
+      disk:
+      - datastore: "{{ vc_setting[tz_environment].vc_datastore }}"
+      name_match: first # not required. choices: first;last. If multiple virtual machines matching the name, use the first or last found.
+      wait_for_ip_address: yes 
+      customization_spec: "{{ vc_setting[tz_environment].vc_customization_spec }}"
+      customization:
+        not: important
+
+      is_template: no # not required. Flag the instance as a template.,This will mark the given virtual machine as template.
+      state: present # not required. choices: present;absent;poweredon;poweredoff;restarted;suspended;shutdownguest;rebootguest. Specify state of the virtual machine be in.,If C(state) is set to C(present) and virtual machine exists, ensure the virtual machine configurations conforms to task arguments.,If C(state) is set to C(absent) and virtual machine exists, then the specified virtual machine is removed with its associated components.,If C(state) is set to one of the following C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended) and virtual machine does not exists, then virtual machine is deployed with given parameters.,If C(state) is set to C(poweredon) and virtual machine exists with powerstate other than powered on, then the specified virtual machine is powered on.,If C(state) is set to C(poweredoff) and virtual machine exists with powerstate other than powered off, then the specified virtual machine is powered off.,If C(state) is set to C(restarted) and virtual machine exists, then the virtual machine is restarted.,If C(state) is set to C(suspended) and virtual machine exists, then the virtual machine is set to suspended mode.,If C(state) is set to C(shutdownguest) and virtual machine exists, then the virtual machine is shutdown.,If C(state) is set to C(rebootguest) and virtual machine exists, then the virtual machine is rebooted.
+      annotation: "{{ vc_note }}" # not required. A note or annotation to include in the virtual machine.
+      template: "{{ vc_setting[tz_environment].vc_template_name }}" # not required. Template or existing virtual machine used to create new virtual machine.,If this value is not set, virtual machine is created without using a template.,If the virtual machine already exists, this parameter will be ignored.,This parameter is case sensitive.
+      linked_clone: no # not required. Whether to create a linked clone from the snapshot specified.
+      folder: "{{ vc_setting[tz_environment].vc_vm_folder }}" # not required. Destination folder, absolute path to find an existing guest or create the new guest.,The folder should include the datacenter. ESX's datacenter is ha-datacenter.,This parameter is case sensitive.,This parameter is required, while deploying new virtual machine. version_added 2.5.,If multiple machines are found with same name, this parameter is used to identify uniqueness of the virtual machine. version_added 2.5,Examples:,   folder: /ha-datacenter/vm,   folder: ha-datacenter/vm,   folder: /datacenter1/vm,   folder: datacenter1/vm,   folder: /datacenter1/vm/folder1,   folder: datacenter1/vm/folder1,   folder: /folder1/datacenter1/vm,   folder: folder1/datacenter1/vm,   folder: /folder1/datacenter1/vm/folder2
+      validate_certs: False # not required. Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.,If the value is not specified in the task, the value of environment variable C(VMWARE_VALIDATE_CERTS) will be used instead.,Environment variable supported added in version 2.6.,If set to C(True), please make sure Python >= 2.7.9 is installed on the given machine.
+    register: guest_vm_result3
+    delegate_to: 127.0.0.1
+  
+  - name: Store ZDI Ops result for provisioning
+    set_fact:
+      guest_vm_result: "{{ guest_vm_result3 }}"
+  when: not extend_vdi_lease
+
+- debug: var=guest_vm_result
+
+

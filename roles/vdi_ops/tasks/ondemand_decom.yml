@@ -1,0 +1,44 @@
+---
+# ************************************************************************
+# Description: Delete single ZDI On-demand 
+# Parameters:
+#   vdi_name: ZDIUW10AC00021
+#   vdiname_prefix
+# 
+# ************************************************************************
+- debug: 
+    msg: "Starting to delete ZDI {{ vdi_name }}..."
+
+- include_vars:
+    file: "../../vdi_name/defaults/main.yml" # for prefix
+
+- name: Checking user input
+  fail:
+    msg: "Invalid ZDI name specified '{{ vdi_name }}', a prefix of '{{ vdiname_prefix }}' is required."
+  when: 'vdiname_prefix not in vdi_name'
+
+- include_role:
+    name: vdi_ops
+    tasks_from: find_vdi
+
+- name: Check specified VDI
+  fail:
+    msg: "The specified Win10 ZDI desktop '{{ vdi_name }}' cannot be found in the specified VM folder. Please enter a correct ZDI name."
+  when: vdi_facts.failed == true
+    
+- name: Get ZDI information
+  set_fact:
+    vdi_json: "{{ vdi_facts.instance.annotation | to_json | from_json }}"
+  when: vdi_facts.instance.annotation | to_json | length > 60      
+
+# this will get tower job id, and login user name, no email
+- name: get the Ansible Tower login user
+  include_role:
+    name: tower_login_user  
+
+- name: Decommissioning VDI
+  include_role:
+    name: vdi_ops
+    tasks_from: decom
+  vars:
+    self_decom: true

@@ -1,0 +1,26 @@
+---
+# ************************************************************************
+# Description: Playbook that will be triggered by Tower schedule job to run lifecycle management of VDIs 
+# Parameters:
+#   None
+# 
+# ************************************************************************
+- name: Run scheduled tasks
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Enumerate all VDIs 
+      include_role:
+        name: vdi_ops
+        tasks_from: enum_vdi
+
+    - name: Checking ZDI status
+      include_role:
+        name: vdi_ops
+        tasks_from: reclamation
+      vars:
+        vdi_info_json: "{{ item.value.annotation }}"
+        vdi_name: "{{ item.key }}"
+      with_dict: "{{ vdi_facts.virtual_machines }}"
+

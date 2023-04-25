@@ -1,0 +1,30 @@
+---
+# ************************************************************************
+# Description: Get a new ZDI name by scanning vCenter live ZDI name. Does not have a file to save the name, should NOT run concurrent ops
+# Parameters:
+#   vdi_name: ZDIUW10AC00021, output of the tasks
+# 
+# ************************************************************************
+
+- name: Enumerate all VDIs 
+  include_role:
+    name: vdi_ops
+    tasks_from: enum_vdi
+
+- name: Set initial max seqence number
+  set_fact:
+    max_sequence: 0
+
+- name: Checking existing ZDI names
+  include_tasks: get_max_seq.yml
+  with_dict: "{{ vdi_facts.virtual_machines }}"
+  loop_control:
+    loop_var: server_item
+
+- name: Get current 
+  set_fact:
+    vdi_name: "{{ vdiname_prefix }}{{ '%05d'|format(max_sequence|int + 1) }}"    
+
+- debug: 
+    msg: "New ZDI name is {{ vdi_name }}"  
+    

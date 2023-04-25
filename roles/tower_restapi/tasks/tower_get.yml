@@ -1,0 +1,24 @@
+---
+# ************************************************************************
+# Description:  Standard Tower GET rest call
+# Parameters:
+#   authorization1: input
+#   tower_get_url: URL of the GET request
+#   register_result: output of the rest call
+#   
+# ************************************************************************
+
+- name: Ansible Tower REST Get 
+  uri:
+    url: "{{tower_get_url}}"
+    method: GET
+    follow_redirects: all
+    headers:
+      Accept: "application/json"
+      Authorization: "{{authorization1}}"
+    validate_certs: no
+    timeout: 120
+    status_code: 200
+  register: register_result
+  delegate_to: 127.0.0.1
+- debug: var=register_result

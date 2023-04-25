@@ -1,0 +1,29 @@
+---
+# ************************************************************************
+# Description:  Standard Tower POST rest call
+# Parameters:
+#   authorization1: input
+#   tower_post_url: URL of the POST request
+#   tower_post_body:  body of the POST request
+#   tower_post_result: output of the rest call
+#   
+# ************************************************************************
+- name: Send Ansible Tower Request
+  uri:
+    url: "{{ tower_post_url }}"
+    method: POST
+    follow_redirects: all
+    headers:
+      Accept: "application/json"
+      Authorization: "{{authorization1}}"
+    validate_certs: no
+    body: "{{ tower_post_body }}"
+    return_content: yes
+    body_format: json
+    timeout: 120
+    status_code: 201
+  register: tower_post_result
+  delegate_to: 127.0.0.1
+
+- debug: var=tower_post_result
+

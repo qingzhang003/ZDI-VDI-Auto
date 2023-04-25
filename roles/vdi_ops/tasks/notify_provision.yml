@@ -1,0 +1,69 @@
+# provision ZDI first, then create a schedule job
+---
+# ************************************************************************
+# Description:  Tasks to send email notification after provisioning
+# Parameters:
+#   vdi_name: input
+#   guest_vm_result: input
+#   provision_lease_days: 30 or 15
+#   provision_body.mail: template which has other input paramaeters, such as vdi_note
+#   
+# ************************************************************************
+# - include_vars:
+#     file: "../../tower_restapi/defaults/main.yml" # for tower URL in the email...
+
+- name: Getting time difference between schedule times
+  set_fact:
+    before_after_sche_sec: "{{ (lookup('pipe', 'TZ={{ time_zone }} date +%H:%M:%S') | to_datetime('%H:%M:%S') - schedule_run_time |  to_datetime('%H:%M:%S')).seconds }}"
+ 
+- name: Getting ZDI expiration date 1
+  set_fact:
+    vdi_expiration_date: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d {{ schedule_run_time }} %Y %Z\" -d \"+{{ provision_lease_days }} days\"') }}"
+  when: before_after_sche_sec | int <= 0
+
+- name: Getting ZDI expiration date 2
+  set_fact:
+    vdi_expiration_date: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d {{ schedule_run_time }} %Y %Z\" -d \"+{{ provision_lease_days|int + 1}} days\"') }}"
+  when: before_after_sche_sec | int > 0
+
+- debug:
+    msg: "The ZDI will expire at {{ vdi_expiration_date }}"
+
+- set_fact:
+    vdi_end_time: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d %H:%M:%S %Y %Z\"') }}"  
+
+- block:
+  - name: Get email body for provision
+    set_fact:
+      mail_body: "{{ lookup('template', 'provision_body.mail') }}"
+      mail_subject: "Win10 ZDI Desktop \"{{ vdi_name }}\" has been successfully provisioned."
+    when: extend_vdi_lease == false
+
+  - name: Get email body for extension
+    set_fact:
+      mail_body: "{{ lookup('template', 'extension_body.mail') }}"
+      mail_subject: "The lease of Win10 ZDI Desktop \"{{ vdi_name }}\" has been successfully extended."
+    when: extend_vdi_lease == true
+  when: guest_vm_result.failed == false
+
+- block:
+  - name: Get failure email body for provisioning
+    set_fact:
+      mail_body: "Please contact Client Platforms team for support."
+      mail_subject: "Win10 ZDI Desktop \"{{ vdi_name }}\" provisioning failed."
+    when: extend_vdi_lease == false
+
+  - name: Get failure email body for extension
+    set_fact:
+      mail_body: "Please contact Client Platforms team for support."
+      mail_subject: "Win10 ZDI Desktop \"{{ vdi_name }}\" lease extension failed."
+    when: extend_vdi_lease == true
+  when: guest_vm_result.failed == true
+
+- debug: var=mail_body
+
+- name: Email user
+  include_tasks: email.yml
+   
+   
+    

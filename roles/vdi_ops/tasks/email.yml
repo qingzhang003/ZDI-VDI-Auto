@@ -1,0 +1,29 @@
+---
+# ************************************************************************
+# Description:  send email notification
+# Parameters:
+#   vdi_owner_email: input
+#   mail_body: input
+#   mail_subject: input
+#   email_cc_list
+#   email_type: html or plain
+#   email_headers
+#   
+# ************************************************************************
+- name: Get email cc list
+  set_fact:
+    vdi_email_cc: "{{ email_cc_list.split(';') }}"
+  when: email_cc_list is defined and email_cc_list is search('@')
+
+- name: Notify the user
+  mail:
+    to: "{{ vdi_owner_email }}"
+    from: "{{ mail_from_address }}"
+    host: "{{ smtp_server }}"
+    subject: "{{ mail_subject }}"
+    body: "{{ mail_body }}"
+    cc: "{{ vdi_email_cc | default(omit)}}"
+    subtype: "{{ email_type | default('plain') }}"
+    headers: "{{ email_headers | default(omit) }}"
+      # -Content-type=text/html
+  delegate_to: localhost

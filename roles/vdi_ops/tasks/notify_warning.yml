@@ -1,0 +1,28 @@
+---
+# ************************************************************************
+# Description: notifcation job so it will run in 3 days, cannot run this indivdually
+# Parameters:
+#   lease_day
+#   mail_subject
+#   vdi_json
+#   vdi_elapsed_days
+#   
+# ************************************************************************
+# - include_vars:
+#     file: "../../tower_restapi/defaults/main.yml" # not required. The file name from which variables should be loaded.,If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
+
+- name: Calculate the lease expiration period
+  include_tasks: calc_lease.yml
+
+- name: Get email body
+  set_fact:
+    mail_body: "{{ lookup('template', 'reclaim_warning.mail') }}"
+
+- debug: var=mail_body
+
+- name: Email user
+  include_tasks: email.yml
+  vars:
+    vdi_owner_email: "{{ vdi_json.owner_email }}"
+    email_cc_list: "{{ vdi_json.email_cc_list | default(omit) }}"
+    # mail_subject: "{{ mail_subject2 }}"

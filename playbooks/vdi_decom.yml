@@ -1,0 +1,26 @@
+---
+# ************************************************************************
+# Description: Main On-demand ZDI Deletion 
+# Parameters:
+#   vdi_names: ZDIUW10AC00021
+# 
+# ************************************************************************
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    vdi_names: ZDIUW10AC00028 , ZDIUW10AC00044
+
+  tasks:
+    - name: Get ZDI name list for deletion
+      set_fact:
+        vdi_list: "{{ vdi_names.split(',') | list }}"
+
+    - name: Deleting VDIs 
+      include_role:
+        name: vdi_ops
+        tasks_from: ondemand_decom
+      vars:
+        vdi_name: "{{ item | replace(' ', '') }}"
+      with_items: "{{ vdi_list }}"
+

@@ -1,0 +1,68 @@
+---
+# ************************************************************************
+# Description:  Tasks for scanning a single ZDI to determine if it needs to be deleted, or send email notification
+# Parameters:
+#   vdi_name: input
+#   vdi_info_json: information about the VDI, including lease_days, lease_started, etc
+#   
+# ************************************************************************
+- name: Setting ZDI json data
+  set_fact:
+    vdi_json: "{{ vdi_info_json | to_json | from_json }}"
+  when: vdi_info_json | to_json | length > 60
+
+- block:
+  - debug: 
+      msg: "Starting to scan ZDI {{ vdi_name }} for reclamation..."
+  - debug: var=vdi_json
+  - debug: var=vdi_json.lease_started
+
+  - name: Get current time
+    set_fact:
+      current_time: "{{ lookup('pipe', 'TZ={{ time_zone }} date +\"%a %b %d %H:%M:%S %Y\"') }}" 
+      #"{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+
+  - name: Get elapsed days
+    set_fact:
+      vdi_elapsed_days: "{{ (current_time | to_datetime('%c') - vdi_json.lease_started[:-4] | to_datetime('%c')).total_seconds() / (60 * 60 * 24) }}" # use '%a %b %d %H:%M:%S %Y' is good too
+      lease_days: "{{ vdi_json.lease_days | int }}" # int is useless for 2.5.2, maybe useful in 2.7
+      send_warning1: False
+      send_warning2: False
+      about_to_delete: False
+
+  - debug: var=lease_days
+  - debug: 
+      msg: "Elapsed days: {{ vdi_elapsed_days }}"
+
+  - name: Determine day 3 and day 2 warning
+    set_fact: 
+      send_warning1: True
+      mail_subject: "WARNING: The lease of Win10 ZDI Desktop \"{{ vdi_name }}\" is about to expire"
+    when: vdi_elapsed_days | float >= (lease_days | int - warning_period1) and vdi_elapsed_days | float < (lease_days | int - warning_period2)
+
+  - name: Determine day 1 warning  
+    set_fact: 
+      send_warning2: True
+      mail_subject: "WARNING: Win10 ZDI Desktop \"{{ vdi_name }}\" will be deleted within 24 hours - Last Reminder"
+    when: vdi_elapsed_days | float >= (lease_days | int - warning_period2) and vdi_elapsed_days | float < lease_days | int
+
+  - name: Determine reclamation or not
+    set_fact: 
+      about_to_delete: True
+    when: vdi_elapsed_days | float >= lease_days | int
+
+  - debug: var=send_warning1
+  - debug: var=send_warning2
+  - debug: var=about_to_delete
+
+  - name: Send Warning
+    include_tasks: notify_warning.yml
+    when: send_warning1 or send_warning2
+
+  - name: Delete VDI
+    include_tasks: decom.yml
+    vars:
+      self_decom: false
+    when: about_to_delete
+ 
+  when: vdi_info_json | to_json | length > 60 and vdi_json.owner is defined

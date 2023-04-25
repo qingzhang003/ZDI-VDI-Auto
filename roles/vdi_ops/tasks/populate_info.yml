@@ -1,0 +1,30 @@
+---
+# ************************************************************************
+# Description:  Tasks for populate a single ZDI into a list
+# Parameters:
+#   vdi_name: input
+#   vdi_info_json: information about the VDI, including lease_days, lease_started, etc
+#   
+# ************************************************************************
+
+- name: Setting ZDI json data
+  set_fact:
+    vdi_json: "{{ vdi_info_json | to_json | from_json }}"
+  when: vdi_info_json | to_json | length > 60
+
+- block:
+  - debug: 
+      msg: "Starting to populate ZDI {{ vdi_name }} for reporting..."
+  - debug: var=vdi_json
+
+  - name: Get lease expiration period etc
+    include_tasks: calc_lease.yml
+    vars:
+      current_time: "{{ report_current_time[:-4] }}"
+      lease_days: "{{ vdi_json.lease_days }}"
+
+  - name: Populate info
+    set_fact:
+      new_list: "{{ new_list + [{'name': vdi_name, 'lease_started': vdi_json.lease_started, 'expire': current_expiration_date, 'remaining_hours': remaining_hours | float, 'lease_period': vdi_json.lease_days|int, 'owner': vdi_json.owner, 'note': vdi_json.note, 'email': vdi_json.owner_email, 'cc': vdi_json.email_cc_list }] }}"
+
+  when: vdi_info_json | to_json | length > 60 and vdi_json.owner is defined

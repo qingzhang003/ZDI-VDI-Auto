@@ -1,0 +1,19 @@
+Dear {{ vdi_owner }},
+
+Welcome to Innovation! Your request for a Win10 ZDI desktop is completed successfully. Your requested ZDI should be available within 15-20 minutes from now with the following details:
+
+- ZDI Name: {{ vdi_name }}
+- Requested By: {{ tower_user_name }}
+- Lease Expiration Date: {{ vdi_expiration_date }}
+- Lease Period: {{ vdi_lease_days }} days
+- Provisioning Start Time/Lease Start Date: {{ vdi_start_time }}
+- Provisioning End Time: {{ vdi_end_time }}
+- User Note: {{ vdi_note }}
+- Ansible Tower Job Id: {{ tower_job_id }}
+
+Note: The ZDI will be deleted automatically after {{ vdi_lease_days }} days. Application Certification Leads can login to Ansible Tower to request an extension or to delete the ZDI before the lease expiration date.
+
+Thank you for using ZDI Automation from Ansible Tower.
+
+Your Client Platforms Team
+* This message was sent from an unmonitored email address

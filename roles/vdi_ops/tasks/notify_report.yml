@@ -1,0 +1,27 @@
+---
+# ************************************************************************
+# Description: Generate the email report and send HTML email report 
+# Parameters:
+#   report_current_time
+#   new_list
+#   tower_user_name
+#   tower_job_id
+#   report_email_list
+#   
+# ************************************************************************
+- name: Generate email report
+  set_fact:
+    mail_body: "{{ lookup('template', 'vdi_list.mail') }}"
+
+- debug: var=mail_body
+
+- name: Email Notification
+  include_role: 
+    name: vdi_ops
+    tasks_from: email
+  vars:
+    vdi_owner_email: "{{ report_email_list.split(';') }}"
+    mail_subject: "Win10 ZDI Real Time Lease Status Report - {{ report_current_time }}"
+    email_type: html
+    email_headers: ["Content-type=text/html"]
+    
