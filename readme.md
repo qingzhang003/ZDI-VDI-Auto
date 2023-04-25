@@ -2,8 +2,8 @@
 # ZDI Overview
 This readme provides details regarding Win10 ZDI/VDI automation with Ansible and Ansible Tower architecture design, configuration, administration tasks and contextual descriptions of the project. The following are the main objectives of the project:
 * Self-service ZDI provisioning with lifecycle management
-... VDI provisioning
-... utomatically VDI deletion
+...VDI provisioning
+...utomatically VDI deletion
 * ZDI/VDI lease extension – Self-service Snooze button
 * Self-service VDI deletion
 * ZDI/VDI status reporting
@@ -13,8 +13,8 @@ Win10 ZDI/VDI automation with Ansible/Ansible Tower has the following high level
 * Entitled business users will request a VDI desktop from Ansible Tower as the self-service portal.
 * Given that this is a pre-approved single VDI desktop use case Image, the VDI desktop will be auto-provisioned and an email notification will be sent to the requesting business user that it is ready for use.
 * After 30 days, the requesting business user will be sent an email notification and asked if they would like to extend the use of their VDI desktop for another 30 days. 
-... If the business user takes appropriate action to acknowledge the extended use, an automated schedule job will extend the VDI desktop. An email notification will be sent to the business user of their new termination date.
-... If the business user does not take appropriate action to acknowledge the extended use, the VDI desktop will be automatically de-provisioned. An email notification will be sent to the business user that their VDI desktop has been decommissioned.
+...If the business user takes appropriate action to acknowledge the extended use, an automated schedule job will extend the VDI desktop. An email notification will be sent to the business user of their new termination date.
+...If the business user does not take appropriate action to acknowledge the extended use, the VDI desktop will be automatically de-provisioned. An email notification will be sent to the business user that their VDI desktop has been decommissioned.
 
 ## High Level Architecture
 
@@ -80,54 +80,57 @@ To change the variable value, either modify the default value in the Ansible cod
 In addition to defaults and tasks folder, vdi_ops role also has library and template folders.
 
 * calc_lease.yml	
-... Tasks for calculating the lease period and expiration date - notify_warning, pouplate_info
+...Tasks for calculating the lease period and expiration date - notify_warning, pouplate_info
 * decom.yml	
-... Decommission VDI using Ansible Vmware module, as well as sending email notification - ondemand_decom, reclamation
+...Decommission VDI using Ansible Vmware module, as well as sending email notification - ondemand_decom, reclamation
 * email.yml	
-... Send email - decom, notify_warning, notify_provision, notify_report
+...Send email - decom, notify_warning, notify_provision, notify_report
 * enum_vdi.yml	
-... enumerate all VDIs under specified folder - live_scan (in vdi_name), vdi_report, vdi_schedule
+...enumerate all VDIs under specified folder - live_scan (in vdi_name), vdi_report, vdi_schedule
 
 * extend_lease.yml	
-... Extend a lease of single VDI - vdi_extend
+...Extend a lease of single VDI - vdi_extend
 * find_vdi.yml	
-... Find a VDI by name by querying vCenter - vdi_provision, extend_lease, ondemand_decom
+...Find a VDI by name by querying vCenter - vdi_provision, extend_lease, ondemand_decom
 * get_vdi_info.yml	
-... Get VDI information from VM's annotation field - extend_lease
+...Get VDI information from VM's annotation field - extend_lease
 notify_provision.yml	
-... Generate email content, and send email after VDI provisioning - vdi_provision
+...Generate email content, and send email after VDI provisioning - vdi_provision
 notify_report.yml	
-... Generate HTML email content, and send lease status report by email - vdi_report
+...Generate HTML email content, and send lease status report by email - vdi_report
 * notify_warning.yml	
-... Generate warning email content an send lease expiration warning email - reclamation
+...Generate warning email content an send lease expiration warning email - reclamation
 * ondemand_decom.yml	
-... Decommission a single VDI manually - vdi_decom
+...Decommission a single VDI manually - vdi_decom
 * populate_info.yml	
-... Populate single VDI information to a list from VM's annotation - vdi_report
+...Populate single VDI information to a list from VM's annotation - vdi_report
 * provision.yml	
-... Provision or modify a VDI by using Ansible Vmware module - vdi_provision
+...Provision or modify a VDI by using Ansible Vmware module - vdi_provision
 * reclamation.yml	
-... Tasks for scanning a single VDI to determine if it needs to be deleted, or send email notification- vdi_schedule
+...Tasks for scanning a single VDI to determine if it needs to be deleted, or send email notification- vdi_schedule
 
 #### Library:
 Vdi_ops library includes two Pathon files that overwrite the two default Ansible modules, those become Custom Ansible Modules designed for VDI automation. Two modules are vmware_guest, and vmware_vm_facts.
 
 Here is the list of reasons why we need to have custom Ansible Modules
 * vmware_guest: VDI provisioning:
-... Unable to specify datastore without disk size, etc. 
-... Unable to specify customization spec (upcoming Ansible 2.6 will have that issue fixed)       
+...Unable to specify datastore without disk size, etc. 
+...Unable to specify customization spec (upcoming Ansible 2.6 will have that issue fixed)       
 * vmware_vm_facts: Enumerate VDIs
-... Unable to specify a folder
-... Slow to run
-... Unable to retrieve VM annotation
+...Unable to specify a folder
+...Slow to run
+...Unable to retrieve VM annotation
 
 It is safe to contine using those two custom Ansible modules in forseeable future even if the Ansible version is updated to newer version in tower. Currently Ansible Tower version in PROD is 2.4.3, the FTDEV Ansible Tower version is 2.5.2.
 
 The custom Ansible module path is currently defined under ansible.cfg file: 
 
+```
 [defaults]
 roles_path = ./roles
 library = ./roles/vdi_ops/library 
+```
+
 
 If new custom Ansible module needs to be added to the VDI automation project, it should be added under /vdi_ops/library, insetad of default /playbooks/library. 
 
@@ -140,8 +143,8 @@ Vdi_ops template folder includes all email notification templates and VM annotat
 ## Ansible Tower Job Templates Overview
 As stated earlier, VDI automation objectives are:
 * Self-service VDI provisioning with lifecycle management
-... VDI provisioning
-... Automatically VDI deletion
+...VDI provisioning
+...Automatically VDI deletion
 * VDI lease extension – Self-service Snooze button
 * Self-service VDI deletion
 * VDI status reporting
@@ -187,7 +190,7 @@ The survey allows multiple VDIs to be extended all at the same time. The user ne
 In summary:
 * The business user should run this when he/she gets warning email notification about lease expiration.
 * Specify VDI name(s) to extend the lease
-... Can extend a VDI on behalf of somebody else
+...Can extend a VDI on behalf of somebody else
 * Specify lease period between 3 to 15 days
 * You’re allowed to shrink a lease when the original lease period is still longer than the new lease period
 * Email notification will send to the original owner and original VDI email cc list. The requestor – Ansible Tower login user - will not get email notification if his/her email address is not in the original email cc list, and he/she is not the owner of the VDI.
@@ -203,8 +206,8 @@ This job template allows Win10 VDI desktop(s) to be deleted manually without dep
 ### User Interface
 
 * Specify VDI name(s) to delete 
-... VDI name will be validated
-... Can delete a VDI on behalf of somebody else
+...VDI name will be validated
+...Can delete a VDI on behalf of somebody else
 * Delete will happen immediately without any cooling-off period
 * Email notification will send to the original owner and original VDI email cc list
 * The requestor initials will be logged in the email notification, as well as Ansible Tower Job ID.
@@ -220,14 +223,14 @@ A few notes about the Survey:
 * All 3 fields are mandatory
 * Email address is the where the report will be sent to. Multiple emails can be entered separated by semicolon.
 * Sort By is used to sort column of the status report table, so it can be better viewed on interested field. The options are:
-... VDI name (default)
-... Remaining hours before VDI lease expires
-... Lease period of the VDI
-... Owner name
+...VDI name (default)
+...Remaining hours before VDI lease expires
+...Lease period of the VDI
+...Owner name
 * List all columns (true/false) is used to determine if all VDI metadata will be shown in the report or not. By default it is false. If true, the following columns will be included in the report:
-... Owner email address
-... VDI note
-... Email cc list
+...Owner email address
+...VDI note
+...Email cc list
 
 Additional note about this feature:
 * It can be run at any time, the real time information will be gathered, such as remaining hours of lease, and expiration date
